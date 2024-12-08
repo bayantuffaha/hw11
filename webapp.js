@@ -10,7 +10,7 @@ var port = process.env.PORT || 3000;
 
 // Define the async function to handle database interactions
 async function fetchResults(searchType, query) {
-  let client;
+  var client;
   try {
     console.log("Connecting to MongoDB...");
     client = new MongoClient(urlMongo, { useUnifiedTopology: true });
@@ -19,24 +19,21 @@ async function fetchResults(searchType, query) {
     const dbo = client.db(dbName);
     const collection = dbo.collection("PublicCompanies");
 
-    let theQuery = {};
+    var theQuery = {};
     if (searchType == "ticker") {
       theQuery = { Ticker: query.trim() };
     } else if (searchType == "company") {
       theQuery = { Company: query.trim() };
     }
 
-    console.log("Running query:", theQuery);
     const items = await collection.find(theQuery).toArray();
-    console.log("Query results:", items);
     return items;
   } catch (err) {
-    console.error("Database error:", err);
+    console.error(err);
     throw err;
   } finally {
     if (client) {
       await client.close();
-      console.log("MongoDB connection closed.");
     }
   }
 }
@@ -67,35 +64,27 @@ http
           `);
         res.end();
       } else if (path == "/process" && req.method == "GET") {
-        console.log("Processing search request...");
         const queryObj = urlObj.query;
         const { searchType, query } = queryObj;
 
-        console.log("Fetching results...");
         const results = await fetchResults(searchType, query);
 
-        console.log("Preparing search results...");
         res.write("<h1>Search Results</h1>");
         if (results.length === 0) {
           res.write("<p>No results found.</p>");
         } else {
           results.forEach((doc) => {
             res.write(
-              `<p>Company: ${doc.Company}, Ticker: ${doc.Ticker}, Price: $${doc.Price.toFixed(2)}</p>`
+              `<p>Company: ${doc.Company}, Ticker: ${
+                doc.Ticker
+              }, Price: $${doc.Price.toFixed(2)}</p>`
             );
           });
         }
         res.end();
       }
     } catch (err) {
-      console.error("Error occurred during request handling:", err);
-      if (!res.headersSent) {
-        res.writeHead(500, { "Content-Type": "text/html" });
-        res.write("<h1>500 Internal Server Error</h1>");
-        res.end();
-      }
+      console.error(err);
     }
   })
-  .listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
+  .listen(port);
