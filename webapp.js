@@ -12,7 +12,6 @@ var port = process.env.PORT || 3000;
 async function fetchResults(searchType, query) {
   var client;
   try {
-    console.log("Connecting to MongoDB...");
     client = new MongoClient(urlMongo, { useUnifiedTopology: true });
     await client.connect();
 
@@ -27,9 +26,15 @@ async function fetchResults(searchType, query) {
     }
 
     const items = await collection.find(theQuery).toArray();
+    items.forEach((item) => {
+      console.log(
+        `Company: ${item.Company}, Ticker: ${
+          item.Ticker
+        }, Price: $${item.Price.toFixed(2)}`
+      );
+    });
     return items;
   } catch (err) {
-    console.error(err);
     throw err;
   } finally {
     if (client) {
@@ -46,7 +51,6 @@ http
       const path = urlObj.pathname;
 
       if (path == "/") {
-        console.log("Serving the home page...");
         res.write(`
               <h1>Search for a Stock</h1>
               <form action="/process" method="GET">
@@ -75,9 +79,7 @@ http
         } else {
           results.forEach((doc) => {
             res.write(
-              `<p>Company: ${doc.Company}, Ticker: ${
-                doc.Ticker
-              }, Price: $${doc.Price.toFixed(2)}</p>`
+              `<p>Company: ${doc.Company}, Ticker: ${doc.Ticker}, Price: $${doc.Price}</p>`
             );
           });
         }
