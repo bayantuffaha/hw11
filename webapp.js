@@ -1,4 +1,3 @@
-
 var http = require("http");
 var url = require("url");
 const { MongoClient } = require("mongodb");
@@ -9,6 +8,7 @@ const dbName = "Stock";
 
 var port = process.env.PORT || 3000;
 
+// Define the async function to handle database interactions
 async function fetchResults(searchType, query) {
   let client;
   try {
@@ -83,7 +83,6 @@ http
         res.end();
       } catch (err) {
         console.log(err);
-        res.end();
       }
     }
   })
