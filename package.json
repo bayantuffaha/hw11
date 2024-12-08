@@ -1,0 +1,22 @@
+{
+  "name": "hw11",
+  "version": "1.0.0",
+  "description": "node app ",
+  "main": "webapp.js",
+  "scripts": {
+  "start": "node webapp.js"
+},
+"dependencies": {
+    "mongodb": "^5.0.0" 
+},
+  "repository": {
+  "type": "git",
+  "url": ""
+},
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+  "url": ""
+},
+  "homepage": ""
+}
