@@ -12,6 +12,7 @@ var port = process.env.PORT || 3000;
 async function fetchResults(searchType, query) {
   let client;
   try {
+    console.log("Connecting to MongoDB...");
     client = new MongoClient(urlMongo, { useUnifiedTopology: true });
     await client.connect();
 
@@ -25,65 +26,76 @@ async function fetchResults(searchType, query) {
       theQuery = { Company: query.trim() };
     }
 
+    console.log("Running query:", theQuery);
     const items = await collection.find(theQuery).toArray();
+    console.log("Query results:", items);
     return items;
   } catch (err) {
-    console.error(err);
+    console.error("Database error:", err);
     throw err;
   } finally {
     if (client) {
-      client.close();
+      await client.close();
+      console.log("MongoDB connection closed.");
     }
   }
 }
 
 http
   .createServer(async function (req, res) {
-    res.writeHead(200, { "Content-Type": "text/html" });
-    const urlObj = url.parse(req.url, true);
-    const path = urlObj.pathname;
+    try {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      const urlObj = url.parse(req.url, true);
+      const path = urlObj.pathname;
 
-    if (path == "/") {
-      res.write(`
-            <h1>Search for a Stock</h1>
-            <form action="/process" method="GET">
-                <label>
-                    <input type="radio" name="searchType" value="ticker" checked>
-                    Search by Ticker Symbol
-                </label><br>
-                <label>
-                    <input type="radio" name="searchType" value="company">
-                    Search by Company Name
-                </label><br>
-                <input type="text" name="query" placeholder="Enter your search term" required>
-                <button type="submit">Search</button>
-            </form>
-        `);
-      res.end();
-    } else if (path == "/process" && req.method == "GET") {
-      const queryObj = urlObj.query;
-      const { searchType, query } = queryObj;
+      if (path == "/") {
+        console.log("Serving the home page...");
+        res.write(`
+              <h1>Search for a Stock</h1>
+              <form action="/process" method="GET">
+                  <label>
+                      <input type="radio" name="searchType" value="ticker" checked>
+                      Search by Ticker Symbol
+                  </label><br>
+                  <label>
+                      <input type="radio" name="searchType" value="company">
+                      Search by Company Name
+                  </label><br>
+                  <input type="text" name="query" placeholder="Enter your search term" required>
+                  <button type="submit">Search</button>
+              </form>
+          `);
+        res.end();
+      } else if (path == "/process" && req.method == "GET") {
+        console.log("Processing search request...");
+        const queryObj = urlObj.query;
+        const { searchType, query } = queryObj;
 
-      try {
+        console.log("Fetching results...");
         const results = await fetchResults(searchType, query);
 
-        res.writeHead(200, { "Content-Type": "text/html" });
+        console.log("Preparing search results...");
         res.write("<h1>Search Results</h1>");
         if (results.length === 0) {
           res.write("<p>No results found.</p>");
         } else {
           results.forEach((doc) => {
             res.write(
-              `<p>Company: ${doc.Company}, Ticker: ${
-                doc.Ticker
-              }, Price: $${doc.Price.toFixed(2)}</p>`
+              `<p>Company: ${doc.Company}, Ticker: ${doc.Ticker}, Price: $${doc.Price.toFixed(2)}</p>`
             );
           });
         }
         res.end();
-      } catch (err) {
-        console.log(err);
+      }
+    } catch (err) {
+      console.error("Error occurred during request handling:", err);
+      if (!res.headersSent) {
+        res.writeHead(500, { "Content-Type": "text/html" });
+        res.write("<h1>500 Internal Server Error</h1>");
+        res.end();
       }
     }
   })
-  .listen(port);
+  .listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
