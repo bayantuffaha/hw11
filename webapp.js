@@ -29,6 +29,7 @@ http
                 <button type="submit">Search</button>
             </form>
         `);
+      res.end();
     } else if (path == "/process" && req.method == "GET") {
       var queryObj = url.parse(req.url, true).query;
       var { searchType, query } = queryObj;
@@ -49,6 +50,7 @@ http
 
         collection.find(theQuery).toArray((err, results) => {
           if (err) {
+            db.close();
             return console.log(err);
           }
 
