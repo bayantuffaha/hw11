@@ -6,6 +6,8 @@ const urlMongo =
   "mongodb+srv://user:user123@cluster0.utd5z.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const dbName = "Stock";
 
+var port = process.env.PORT || 3000;
+
 http
   .createServer(function (req, res) {
     res.writeHead(200, { "Content-Type": "text/html" });
@@ -27,7 +29,7 @@ http
                 <button type="submit">Search</button>
             </form>
         `);
-    } else if ((path = "/process" && req.method == "GET")) {
+    } else if (path == "/process" && req.method == "GET") {
       var queryObj = url.parse(req.url, true).query;
       var { searchType, query } = queryObj;
       MongoClient.connect(urlMongo, function (err, db) {
@@ -69,4 +71,4 @@ http
       });
     }
   })
-  .listen(8080);
+  .listen(port);
